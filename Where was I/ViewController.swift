@@ -7,14 +7,47 @@
 //
 
 import UIKit
+import MapKit
 
-class ViewController: UIViewController {
-
+class ViewController: UIViewController, CLLocationManagerDelegate {
+    @IBOutlet weak var mapVIew: MKMapView!
+    let locationManager = CLLocationManager()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+        locationManager.delegate = self
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.startUpdatingLocation()
+        
+        if let oldCoords = DataStore().getLastLocation(){
+            let anotation = MKPointAnnotation()
+            anotation.coordinate.latitude = Double(oldCoords.latitude)!
+            anotation.coordinate.longitude = Double(oldCoords.longitude)!
+            anotation.title = "I was here!"
+            anotation.subtitle = "Remember?"
+            mapVIew.addAnnotation(anotation)
+        }
     }
-
+    
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        guard status == .authorizedWhenInUse else{
+            print("No Access for location")
+            return
+        }
+        print("location granted")
+        mapVIew.showsUserLocation = true
+    }
+    
+    @IBAction func saveButtonClicked(_ sender: UIBarButtonItem) {
+        let coord = locationManager.location?.coordinate
+        if let lat = coord?.latitude{
+            if let long = coord?.longitude{
+                DataStore().saveLocation(lat: String(lat), long: String(long))
+            }
+        }
+        
+    }
+    
 
 }
 
